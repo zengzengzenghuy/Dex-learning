@@ -18,5 +18,8 @@
   "homepage": "https://github.com/zengzengzenghuy/Dex-learning#readme",
   "dependencies": {
     "hardhat": "^2.9.7"
+  },
+  "devDependencies": {
+    "@openzeppelin/contracts": "^4.6.0"
   }
 }
