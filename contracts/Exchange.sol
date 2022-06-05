@@ -29,7 +29,7 @@ contract Exchange is ERC20{
     function addLiquidity(uint256 _tokenAmount)public payable returns(uint256){
         if (getReserve()==0){
             IERC20 token = IERC20(tokenAddress);
-            token.transferFrom(msg.sender,address(this),__tokenAmount);
+            token.transferFrom(msg.sender,address(this),_tokenAmount);
             uint256 liquidity = address(this).balance;
             _mint(msg.sender,liquidity);
             return liquidity;
@@ -88,12 +88,12 @@ contract Exchange is ERC20{
     function getEthAmount(uint256 _tokenSold)public view returns(uint256){
         require(_tokenSold>0,"invalid token amount");
         uint256 tokenReserve= getReserve();
-        return getAmount(_tokenSold,tokenReserve,adress(this).balance); 
+        return getAmount(_tokenSold,tokenReserve,address(this).balance); 
     }
     // use ETH to swap other token
     function ethToToken(uint256 _minTokens,address recipient) private{
         uint256 tokenReserve = getReserve();
-        uint256 tokensBought= getAmount(msg.value,address(this).balanc-msg.value,tokenReserve);
+        uint256 tokensBought= getAmount(msg.value,address(this).balance-msg.value,tokenReserve);
         require(tokensBought>=_minTokens,"insufficient output token for swap");
         IERC20(tokenAddress).transfer(recipient,tokensBought);
 
@@ -101,7 +101,7 @@ contract Exchange is ERC20{
     function ethToTokenSwap(uint256 _minTokens)public payable{
         ethToToken(_minTokens,msg.sender);
     }
-    function ethToTokenTransfer(uint256 _minTokens,address _recipient)pubic payable{
+    function ethToTokenTransfer(uint256 _minTokens,address _recipient)public payable{
         ethToToken(_minTokens,_recipient);
     }
 
