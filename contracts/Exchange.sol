@@ -30,8 +30,9 @@ contract Exchange is ERC20 {
             // add Reserve 
             IERC20 token = IERC20(tokenAddress);
             token.transferFrom(msg.sender, address(this), _tokenAmount);
-
+            // added address(this).balance ETH
             uint256 liquidity = address(this).balance;
+            // ERC20.totalSupply() += liquidity
             _mint(msg.sender, liquidity); //  ERC20._mint() 
             
             return liquidity;
@@ -53,8 +54,9 @@ contract Exchange is ERC20 {
     }
 
     function removeLiquidity(uint256 _amount)public returns(uint256, uint256){
-        require(_amount>0,"invalid amount");
-        // ethAmount/address(this).balance = _amount/totalSupply
+        require(_amount>0,"invalid burn amount");
+        // ethAmount/address(this).balance = _amount/totalSupply  (actually totalSupply = address(this).balance, but just totalSupply is for LP tokens, address(this).balance is for ETH)
+        // IERC20.totalSupply()    ----- the LP token total Supply
         uint256 ethAmount= (address(this).balance*_amount)/totalSupply();
         uint256 tokenAmount = (getReserve()*_amount)/totalSupply();
         //ERC20._burn LP token
@@ -91,6 +93,7 @@ contract Exchange is ERC20 {
         return getAmount(_tokenSold,tokenReserve,address(this).balance); 
     }
     // use ETH to swap other token
+    // ETH: msg.value, Token = _minTokens
     function ethToToken(uint256 _minTokens,address recipient) private{
         uint256 tokenReserve = getReserve();
         uint256 tokensBought= getAmount(msg.value,address(this).balance-msg.value,tokenReserve);

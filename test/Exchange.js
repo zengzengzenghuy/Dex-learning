@@ -3,7 +3,8 @@ require('@nomiclabs/hardhat-waffle');
 const { expect } = require("chai");
 const { BigNumber, utils ,provider} = require("ethers");
 const {ethers} = require("hardhat");
-
+const { experimentalAddHardhatNetworkMessageTraceHook } = require('hardhat/config');
+const { getGasFeeFromTx } = require('../utils');
 const toWei=(value)=>utils.parseEther(value.toString());
 const fromWei=(value)=>utils.formatEther(typeof value==='string'?value:value.toString());
 //const getBalance = provider.getBalance;
@@ -86,8 +87,77 @@ describe("Exchange",()=>{
             });
             it("fails when not enough tokens",async()=>{
                 await expect(exchange.addLiquidity(toWei(50),{value:toWei(50)})).to.be.revertedWith("insufficient token amount");
-            })
+            });
             
+        });
+    });
+    describe("remove liquidity",()=>{
+        beforeEach(async()=>{
+            await token.approve(exchange.address, toWei(300));
+            await exchange.addLiquidity(toWei(200),{value:toWei(100)});
+        });
+        it("removes some liquidity",async()=>{
+            const amount = toWei(25);
+            // getBalance is undefined error not solve
+            //const userEtherBalanceBefore = await provider.getBalance(owner.address);
+            const userTokenBalanceBefore = await token.balanceOf(owner.address);
+
+            const tx = await exchange.removeLiquidity(amount);
+            const gasFee = await getGasFeeFromTx(tx);
+            // token balance left 150
+            expect(await exchange.getReserve()).to.equal(toWei(150));
+            // ETH balance left 75
+            //expect(await getBalance(exchange.address)).to.equal(toWei(75));
+
+            //const userEtherBalanceAfter = await provider.getBalance(owner.address);
+            const userTokenBalanceAfter = await token.balanceOf(owner.address);
+
+            //expect(userEtherBalanceAfter.sub(userEtherBalanceAfter)).to.equal(amount.sub(gasFee));
+
+            expect(userTokenBalanceAfter.sub(userTokenBalanceBefore)).to.equal(toWei(50));
+
+        });
+        it("removes all liquidity",async()=>{
+            //const userEtherBalanceBefore = await getBalance(owner.address);
+            const userTokenBalanceBefore= await token.balanceOf(owner.address);
+
+            const tx = await exchange.removeLiquidity(toWei(100));
+            const gasFee = await getGasFeeFromTx(tx);
+
+            expect(await exchange.getReserve()).to.equal(toWei(0));
+            //expect(await getBalance(exchange.address)).to.equal(toWei(0));
+
+            //const userEtherBalanceAfter = await getBalance(owner.address);
+            const userTokenBalanceAfter = await token.balanceOf(owner.address);
+
+            //expect(await userEtherBalanceAfter.sub(userEtherBalanceBefore)).to.equal(toWei(100).sub(gasFee));
+            expect(await userTokenBalanceAfter.sub(userTokenBalanceBefore)).to.equal(toWei(200));
+        });
+        // it("pays for provided liquidity",async()=>{
+        //     // check the balance of owner after user use the pool to swap
+        //     const amount = toWei(41);
+        //     const userEtherBalanceBefore = await getBalance(owner.address);
+        //     const userTokenBalanceBefore = await token.balanceOf(owner.address);
+        //     // alice want to swap 13 ETH, expect to get at least 17 tokens
+        //     await exchange.connect(alice).ethToTokenSwap(toWei(17),{value:toWei(13)});
+
+        //     const tx = await exchange.removeLiquidity(amount);
+        //     const gasFee = await getGasFeeFromTx(tx);
+
+        //     const userEtherBalanceAfter = await getBalance(owner.address);
+        //     const userTokenBalanceAfter = await token.balanceOf(owner.address);
+
+        //     expect(userEtherBalanceAfter.sub(userEtherBalanceBefore)).to.equal(toWei(110).sub(gasFee));
+        //     expect(fromWei(userTokenBalanceAfter.sub(userTokenBalanceBefore))).to.equal('')
+
+
+        // });
+        it("burns LP tokens",async()=>{
+            await expect(()=>exchange.removeLiquidity(toWei(25))).to.changeTokenBalance(exchange,owner,toWei(-25));
+            expect(await exchange.totalSupply()).to.equal(toWei(75));
+        });
+        it("doesn't allow invalid amount",async()=>{
+            await expect(exchange.removeLiquidity(toWei(100.1))).to.be.revertedWith("burn amount exceeds balance")
         })
     })
 })
