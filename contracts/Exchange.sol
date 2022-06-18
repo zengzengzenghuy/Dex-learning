@@ -9,46 +9,46 @@ interface IExchange{
 interface IFactory{
     function getExchange(address _tokenAddress) external returns (address);
 }
-/*
-
-    @param tokenAddress: the token address for this exchange pair, inherit IERC20
-    @param factoryAddress: the factory address of this exchange pair
-
- */
-contract Exchange is ERC20{
+contract Exchange is ERC20 {
     address public tokenAddress;
-
     address public factoryAddress;
 
-    constructor(address _token)ERC20("Uniswap-V1-token","UNI-V1"){
-        require(_token!=address(0),"invalid token address");
+    // ERC20 token as LP token
+    constructor(address _token) ERC20("Uniswap-V1-token", "UNI-V1") {
+        require(_token != address(0), "invalid token address");
+
         tokenAddress = _token;
         factoryAddress = msg.sender;
     }
-    // tokenAmount/tokenReserve= ethAmount/ethReserve, the ratio is the same
-    function addLiquidity(uint256 _tokenAmount)public payable returns(uint256){
-        if (getReserve()==0){
+
+    function addLiquidity(uint256 _tokenAmount)
+        public
+        payable
+        returns (uint256)
+    {
+        if (getReserve() == 0) {
+            // add Reserve 
             IERC20 token = IERC20(tokenAddress);
-            token.transferFrom(msg.sender,address(this),_tokenAmount);
+            token.transferFrom(msg.sender, address(this), _tokenAmount);
+
             uint256 liquidity = address(this).balance;
-            _mint(msg.sender,liquidity);
+            _mint(msg.sender, liquidity); //  ERC20._mint() 
+            
             return liquidity;
-        }else{
-            uint256 ethReserve= address(this).balance-msg.value;
-            uint256 tokenReserve=getReserve();
-            //count if add msg.value of eth, how many token should add into pool 
-            uint256 tokenAmount=(msg.value*tokenReserve)/ethReserve;
+        } else {
 
-            require(_tokenAmount>=tokenAmount,"insufficient token amount");
+            uint256 ethReserve = address(this).balance - msg.value;
+            uint256 tokenReserve = getReserve();
+            uint256 tokenAmount = (msg.value * tokenReserve) / ethReserve;
 
-            IERC20 token= IERC20(tokenAddress);
-            token.transferFrom(msg.sender,address(this),tokenAmount);
+            require(_tokenAmount >= tokenAmount, "insufficient token amount");
 
-            uint256 liquidity=(msg.value*totalSupply())/ethReserve;
-            //mint LP token by using ERC20._mint()
-            _mint(msg.sender,liquidity);
+            IERC20 token = IERC20(tokenAddress);
+            token.transferFrom(msg.sender, address(this), tokenAmount);
+
+            uint256 liquidity = (msg.value * totalSupply()) / ethReserve;
+            _mint(msg.sender, liquidity); //  ERC20._mint() 
             return liquidity;
-
         }
     }
 

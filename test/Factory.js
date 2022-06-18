@@ -28,6 +28,9 @@ describe("Factory",()=>{
 
     describe("create Exchange",()=>{
         it("deploy an exchange",async()=>{
+            // use factory contract to create exchange pair 
+            // and create exchagne instance that attach exchange address
+            // thus msg.sender is factory contract
             const exchangeAddress = await factory.callStatic.createExchangePair(token.address);
             factory.createExchangePair(token.address);
             console.log(exchangeAddress);
