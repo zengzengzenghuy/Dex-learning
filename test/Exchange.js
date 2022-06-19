@@ -158,6 +158,37 @@ describe("Exchange",()=>{
         });
         it("doesn't allow invalid amount",async()=>{
             await expect(exchange.removeLiquidity(toWei(100.1))).to.be.revertedWith("burn amount exceeds balance")
+        });
+    });
+    describe("get Token Amount",()=>{
+        it("returns correct token amount",async()=>{
+            await token.approve(exchange.address, toWei(2000));
+            await exchange.addLiquidity(toWei(2000), { value: toWei(1000) });
+      
+            let tokensOut = await exchange.getTokenAmount(toWei(1));
+            expect(fromWei(tokensOut)).to.equal('1.978041738678708079');
+      
+            tokensOut = await exchange.getTokenAmount(toWei(100));
+            expect(fromWei(tokensOut)).to.equal('180.1637852593266606');
+      
+            tokensOut = await exchange.getTokenAmount(toWei(1000));
+            expect(fromWei(tokensOut)).to.equal('994.974874371859296482');
+        });
+    });
+    describe("get ETH amount",()=>{
+        it("returns correct ether amount",async()=>{
+            await token.approve(exchange.address,toWei(2000));
+            await exchange.addLiquidity(toWei(2000),{value:toWei(1000)});
+
+            let ethOut = await exchange.getEthAmount(toWei(2));
+            expect(fromWei(ethOut)).to.equal('0.989020869339354039');
+
+            ethOut = await exchange.getEthAmount(toWei(100));
+            expect(fromWei(ethOut)).to.equal('47.16531681753215817');
+
+            ethOut = await exchange.getEthAmount(toWei(2000));
+            expect(fromWei(ethOut)).to.equal('497.487437185929648241');
         })
     })
+
 })

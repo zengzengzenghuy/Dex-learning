@@ -78,7 +78,7 @@ contract Exchange is ERC20 {
         //numerator and denominator multiply 100 at the same time
         uint256 inputAmountWithFee = inputAmount *99;
         uint256 numerator= inputAmountWithFee*outputReserve;
-        uint256 denominator= (inputReserve*100)*inputAmountWithFee;
+        uint256 denominator= (inputReserve*100)+inputAmountWithFee;
         return numerator/denominator;
     }
     //swap ETH for token
